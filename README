@@ -31,6 +31,7 @@ How to get started?
 
   - At this point you will need to import the PO file:
       php simplepo.php -n "Catalogue_Name" -i "Input_Filename"
+ 
 
   Now if you point your web browser to the location where you installed SimplePO
   you will see a list of all of the Catalogues.
@@ -40,6 +41,6 @@ How to get started?
   -To export all translations back to a PO file:
       php simplepo.php -n "Catalogue_Name" -o "Output_Filename"
 
-
-
+  -To update from a PO or POT file (existent translation will not be erased):
+      php simplepo.php -n "Catalogue_Name" -i "Input_Filename"
 

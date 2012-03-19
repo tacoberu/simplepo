@@ -20,6 +20,8 @@ class TempPoMsgStore implements PoMsgStore {
 }
 
 class DBPoMsgStore implements PoMsgStore {
+  private $filled_keys = array();
+
   public function init( $catalogue_name ){
     $q = new Query();
     $catalogue = $q->sql("SELECT * FROM {catalogues} WHERE name = ?",
@@ -31,6 +33,17 @@ class DBPoMsgStore implements PoMsgStore {
     } else {
       $this->catalogue_id = $catalogue['id'];
     }
+    #Get keys to prevent them to be erased
+    $keys = $q->sql("SELECT msgid FROM {messages}
+                     WHERE catalogue_id=? AND msgstr != ''",
+                     $this->catalogue_id)
+                    ->fetchCol();
+    #Hashmap for perfs
+    if ( is_array($keys) ) {
+        foreach($keys as $key) {
+		$this->filled_keys[$key] = $key;
+	}
+    }
   }
 
   public function write( $msg, $isHeader ){
@@ -39,21 +52,29 @@ class DBPoMsgStore implements PoMsgStore {
 		$msg['is_obsolete'] = !!$msg['is_obsolete'] ? 1 : 0;
 		$msg['is_header'] = $isHeader ? 1 : 0;
 
-    $q->sql("DELETE FROM {messages} 
-						WHERE  catalogue_id=? AND BINARY msgid= BINARY ?",
-						$this->catalogue_id,$msg["msgid"])
-						->execute();
-	$allow_empty_fields = array('translator-comments', 'extracted-comments', 'reference', 'flags', 'is_obsolete', 'previous-untranslated-string');
-	foreach($allow_empty_fields as $field) {
-	    if (!isset($msg[$field])) {
+    #TODO put this optional. Keys can be erased if option is on.
+    # Give priority to simplepo for already translated keys.
+    if ( !isset( $this->filled_keys[$msg["msgid"]] ) ) {
+        $q->sql("DELETE FROM {messages} 
+                 WHERE  catalogue_id=? AND BINARY msgid= BINARY ?",
+                 $this->catalogue_id,$msg["msgid"])
+                 ->execute();
+        $allow_empty_fields = array('translator-comments', 'extracted-comments', 'reference', 'flags', 'is_obsolete', 'previous-untranslated-string');
+        foreach($allow_empty_fields as $field) {
+            if (!isset($msg[$field])) {
 	        $msg[$field] = '';
-	    }
-	}
-    $q->sql("INSERT INTO {messages} 
-						(catalogue_id, msgid, msgstr, comments, extracted_comments, reference,flags, is_obsolete, previous_untranslated_string,is_header)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?)",$this->catalogue_id , $msg["msgid"], $msg["msgstr"], $msg["translator-comments"], $msg["extracted-comments"],
-            $msg["reference"], $msg["flags"], $msg["is_obsolete"], $msg["previous-untranslated-string"],$msg['is_header'])
-						->execute();
+            }
+        }
+        $q->sql("INSERT INTO {messages} 
+                 (catalogue_id, msgid, msgstr, comments, extracted_comments,
+                 reference,flags, is_obsolete, previous_untranslated_string,
+                 is_header) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?)",
+                 $this->catalogue_id , $msg["msgid"], $msg["msgstr"], 
+                 $msg["translator-comments"], $msg["extracted-comments"],
+                 $msg["reference"], $msg["flags"], $msg["is_obsolete"], 
+                 $msg["previous-untranslated-string"],$msg['is_header'])
+                 ->execute();
+    }
   }
 
   public function read(){
@@ -319,7 +340,7 @@ class POParser{
 		
     $msg = "";
     foreach ( $entry as $k=>$v ){
-			if($v && $prefixes[$k]) {
+			if($v && isset($prefixes[$k])) {
 				$msg .= $this->addPrefixToLines($prefixes[$k],$v) . "\n";
 			}
     }

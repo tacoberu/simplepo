@@ -13,6 +13,7 @@ class DBConnection {
 		if(!self::$link)
 			self::$link = mysql_connect( $simplepo_config['db_host'], $simplepo_config['db_user'], $simplepo_config['db_pass'] );
 			mysql_select_db( $simplepo_config['db_name'] );
+			mysql_set_charset('utf8');
 		return self::$link;
 	}
 }
