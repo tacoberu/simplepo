@@ -44,7 +44,8 @@
                 $row.find('.inner')
                   .css( 'width',
                     $row.find('.progressbar').width()  * 
-                    ( data[i].translated_count / data[i].message_count)
+                    (data[i].translated_count / data[i].message_count)
+                    //( data[i].fuzzy_count / data[i].message_count)
                   );
                 
                 $row.find('.translated').text(data[i].translated_count);

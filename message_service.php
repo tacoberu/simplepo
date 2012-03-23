@@ -56,16 +56,17 @@ class MessageService {
     function getCatalogues(){
       $q = new Query();
       return $q->sql("SELECT c.name,c.id,COUNT(*) as message_count, 
-														 SUM(LENGTH(m.msgstr) >0) as translated_count
+	      SUM(LENGTH(m.msgstr) >0 and m.flags != 'fuzzy') as translated_count,
+	      SUM(LENGTH(m.msgstr) >0 and m.flags = 'fuzzy') as fuzzy_count
 														 
 											FROM {catalogues} c
 											LEFT JOIN {messages} m ON m.catalogue_id=c.id
 											GROUP BY c.id")->fetchAll();
     }
-    function updateMessage($id, $comments, $msgstr, $fuzzy){
+    function updateMessage($msgid, $comments, $msgstr, $fuzzy){
       $q = new Query();
 			$flags = $fuzzy ? 'fuzzy' : '';
-      $q->sql("UPDATE {messages} SET comments=?, msgstr=?, flags=? WHERE id=?", $comments, $msgstr, $flags, $id)->execute();
+      $q->sql("UPDATE {messages} SET comments=?, msgstr=?, flags=? WHERE msgid=?", $comments, $msgstr, $flags, $msgid)->execute();
       echo "true";
     }
 	function makeError() {

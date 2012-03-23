@@ -6,6 +6,7 @@ require_once('POParser.php');
 
 class SimplePO{
   protected $force;
+  protected $clean;
   protected $infile;
   protected $outfile;
   protected $catalogue_name;
@@ -31,6 +32,9 @@ class SimplePO{
 	    if ( !$this->catalogue_name ) die("Please provide a catalogue name\n");
 	    $POParser = new POParser($MsgStore);
 	    $POParser->parseEntriesFromStream( fopen( $this->infile, 'r') );
+	    if ( $this->clean ) {
+	    	$POParser->cleanDatabase( fopen( $this->infile, 'r') );
+	    }
 			$this->echo_stderr(sprintf("%s parsed and saved\n",$this->infile));
 	    exit(0);
 	  }
@@ -49,7 +53,8 @@ class SimplePO{
 	  $flags = array(
 	   "version" => array("-v","--version"),
 	   "install" =>array("--install"),
-	   "force" => array("-f", "--force")
+	   "force" => array("-f", "--force"),
+	   "clean" => array("-c", "--clean")
 	  );
 
 	  $options = 	array(
@@ -67,6 +72,9 @@ class SimplePO{
 	      }
 				if ( in_array($a, $flags['force']) ){
 	        $this->force = true;
+	      }
+				if ( in_array($a, $flags['clean']) ){
+	        $this->clean = true;
 	      }
 	      if( in_array($a, $flags['install']) ){
 	        $this->doInstall = true;
@@ -97,6 +105,7 @@ Flags:
   version:  -v  --version
   install:      --install
   force:    -f  --force
+  clean:    -c  --clean
 Options:
   -i inputfilename
   -o outputfilename
@@ -111,6 +120,8 @@ To read in a PO file:
   php simplepo.php -n "CatalogueName" -i inputfilename
 To write to a PO file:
   php simplepo.php -n "CatalogueName" -o outputfilename
+To read in a PO file and delete or mark obsolete strings:
+  php simplepo.php -n "CatalogueName" -i inputfilename -c
 
 USAGE;
 	  $this->echo_stderr($usage);
