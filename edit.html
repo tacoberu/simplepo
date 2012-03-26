@@ -40,28 +40,28 @@
     // Object that handles Error Notifications and Display Messages
     var NotificationObj = (function() {
       var _init = function(){
-	      $('#errors #hideBtn').live('click', function(){ hideError(); });
-	      $('#messages #hideBtn').live('click', function(){ hideMessage();  });
+          $('#errors #hideBtn').live('click', function(){ hideError(); });
+          $('#messages #hideBtn').live('click', function(){ hideMessage();  });
       };
       var hideAll = function(){
-	      hideError();
-	      hideMessage();
+          hideError();
+          hideMessage();
       };
       var showError = function(msg){
-	      $('<span />').html("<br />" + msg).appendTo('#errors p');
-	      $('#errors').fadeIn();
-	      $('#next').hide();
+          $('<span />').html("<br />" + msg).appendTo('#errors p');
+          $('#errors').fadeIn();
+          $('#next').hide();
       };
       var hideError = function(){
-	      $('#errors').fadeOut();
+          $('#errors').fadeOut();
       };
       var showMessage = function(msg){
-	      $('#messages').stop().css({opacity:0});
-	      $('#messages span').text(msg);
-	      $('#messages').animate({opacity:1},300, function(){ $('#messages').animate({opacity:0}, 3000); });
+          $('#messages').stop().css({opacity:0});
+          $('#messages span').text(msg);
+          $('#messages').animate({opacity:1},300, function(){ $('#messages').animate({opacity:0}, 3000); });
       };
       var hideMessage = function(){
-	      $('#messages').css({opacity:0});
+          $('#messages').css({opacity:0});
       };
 
       return {
@@ -72,13 +72,13 @@
           hideAll();
         },
         showError: function(msg){
-	        showError(msg);
+            showError(msg);
         },
         hideError: function(){
           hideError();
         },
         showMessage: function(msg){
-	        showMessage(msg);
+            showMessage(msg);
         },
         hideMessage: function(){
           hideMessage();
@@ -166,7 +166,7 @@
           msg.comments = $('#comments').val();
           $row.trigger('sync');
           $.messageService('updateMessage', 
-                          [msg.id, msg.comments, msg.msgstr, msg.fuzzy], 
+                          [msg.msgid, msg.comments, msg.msgstr, msg.fuzzy], 
                           function() {} 
                           );
         }
@@ -297,9 +297,9 @@
             $("<option />").attr('id',data[i]['id']).text(data[i]['name'])
                            .appendTo($('#catalogue_list'))
                            .attr('selected',data[i]['id'] == catId ? 'selected' : '');
-			if (data[i]['id'] == catId) {
-				$('#cat_name').text(data[i]['name']);
-			}
+            if (data[i]['id'] == catId) {
+                $('#cat_name').text(data[i]['name']);
+            }
         }
       });
     };
@@ -353,7 +353,7 @@
   <div id="errors"><p>-Error-</p><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
   <div id="messages"><span></span></div>
   <div id="nav">
-    <a href="http://code.google.com/p/simplepo/">Simple Po</a> 
+    <a href="http://jenkins.devbk.net/job/trunk-i18n/build?token=ieb6uaQu&cause=SimplePO+manual+launch/">Deploy Langs</a> 
     <a href="index.html">Catalogue</a> 
     <div class="left">
       <span id="cat_name"></span>

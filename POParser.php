@@ -8,14 +8,19 @@ function debug($text) {
 interface PoMsgStore {
   public function write( $msg, $isHeader );
 	public function read();
+  public function clean( $msgid_keys );
 }
 class TempPoMsgStore implements PoMsgStore {
 	private $msgs;
+	private $deleted;
 	function write($msg,$isHeader) {
 		 $this->msgs[] = $msg;
 	}
 	function read() {
 		return $this->msgs;
+	}
+	function clean($msgid_keys) {
+		return $this->deleted;
 	}
 }
 
@@ -56,9 +61,10 @@ class DBPoMsgStore implements PoMsgStore {
     # Give priority to simplepo for already translated keys.
     if ( !isset( $this->filled_keys[$msg["msgid"]] ) ) {
         $q->sql("DELETE FROM {messages} 
-                 WHERE  catalogue_id=? AND BINARY msgid= BINARY ?",
+                 WHERE  catalogue_id=? AND BINARY msgid= BINARY ? AND msgstr = ''",
                  $this->catalogue_id,$msg["msgid"])
                  ->execute();
+	#FIXME Need to be checked: was the previous delete done? if yes go on else stop.
         $allow_empty_fields = array('translator-comments', 'extracted-comments', 'reference', 'flags', 'is_obsolete', 'previous-untranslated-string');
         foreach($allow_empty_fields as $field) {
             if (!isset($msg[$field])) {
@@ -81,6 +87,61 @@ class DBPoMsgStore implements PoMsgStore {
     $q = new Query();
     return $q->sql("SELECT * FROM {messages} WHERE catalogue_id = ? ORDER BY is_header DESC,is_obsolete,id",
  										$this->catalogue_id)->fetchAll();
+  }
+
+  public function clean($keys){
+	$todel = "";
+	$unused = "";
+	$used = "";
+	$i = 0;
+
+	# Get database keys
+	$q = new Query();   
+	$msgs = $q->sql("SELECT msgid,msgstr FROM {messages} WHERE catalogue_id = ?", $this->catalogue_id)->fetchAll();
+
+	# Compare database and file keys
+	if ( is_array($msgs) ) {
+		foreach ( $msgs as $msg ) {
+			if ( $msg["msgid"] == 'login_account' ) {
+				//var_dump($msg["msgid"]);
+				//var_dump($keys);
+			}
+			#TODO handle special char on msgid (like " or ,)
+			if ( !isset( $keys['"'.$msg["msgid"].'"'] ) ) {
+				if ( empty( $msg["msgstr"] ) ) {
+					# delete unused key
+					$todel .= ($todel=="") ? '"'.$msg["msgid"].'"' : ',"'.$msg["msgid"].'"';
+				} else {
+					# mark obsolete unused key
+					$unused .= ($unused=="") ? '"'.$msg["msgid"].'"' : ',"'.$msg["msgid"].'"';
+				}
+				$i++;
+			} else {
+				$used .= ($used=="") ? '"'.$msg["msgid"].'"' : ',"'.$msg["msgid"].'"';
+			}
+		}
+	}
+	if ( !empty($todel) ) {
+        	$q->sql("DELETE FROM {messages} 
+                	 WHERE  catalogue_id=? AND msgid IN ($todel) AND msgstr = ''",
+                 	$this->catalogue_id)
+                 	->execute();
+	}
+	if ( !empty($unused) ) {
+        	$q->sql("UPDATE {messages} 
+                	 SET is_obsolete = 1 WHERE  catalogue_id=? AND msgid IN ($unused)",
+                 	$this->catalogue_id,$unused)
+                 	->execute();
+	}
+	if ( !empty($used) ) {
+        	$q->sql("UPDATE {messages} 
+                	 SET is_obsolete = 0 WHERE  catalogue_id=? AND msgid IN ($used)",
+                 	$this->catalogue_id,$used)
+                 	->execute();
+	}
+
+
+	return  $i;
   }
 }
 
@@ -187,6 +248,29 @@ class POParser{
       $entry = $this->reduceLines($entry_lines);
       $this->saveEntry( $entry, $entry_count++ );
     }
+  }
+
+	public function cleanDatabase($fh) {
+    $this->lineNumber = 0;
+    $entry_count = 0;
+    $deleted = 0;
+    $msgid_keys = array();
+
+    # First, build a map with all the file keyid
+    while( ($line = fgets($fh)) !== false ) {
+      $this->lineNumber++;
+      $line = $this->parseLine($line);
+      if ( $line["type"] == "msgid" ){
+        $msgid_keys[$line["value"]] = $line["value"];
+	if ($msgid_keys[$line["value"]] == "login_account") {
+		var_dump("$msgid_keys");
+      }
+      }
+    }
+
+    # Now test each database keyid and delete or mark it obsolete.
+    $deleted = $this->entryStore->clean($msgid_keys);
+    return $deleted;
   }
   
 	function parseLine( $line ){
