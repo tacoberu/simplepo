@@ -23,11 +23,11 @@ $( function(){
                 + ''
                 + '<div id="progress-bar" class="progress-bar green stripes">'
                 + '<span style="width:'
-                + parseInt(data[i].translated_count / data[i].message_count *100)
+                + parseInt(data[i].translated_count / (data[i].message_count -1) *100)
                 + '%"></span>'
                 + '</div>'
                 + '<div id="percentage"><p class="percentage">'
-                + data[i].translated_count + '/' + data[i].message_count +'</p></div>';
+                + data[i].translated_count + '/' + (data[i].message_count -1) +'</p></div>';
             $container.append(html);
         };
     });
