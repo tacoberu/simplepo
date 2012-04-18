@@ -140,7 +140,7 @@
       }
 
       var selectMessage = function (index) {
-        beforeBlur();
+        beforeBlur(cat_id);
         $('#msg_table').find('tbody tr.selected').removeClass('selected');
         var arr_index = $('#msg_table').find('tbody tr:eq(' +(index)+ ')').addClass('selected').data('index');
         fillEditBar(arr_index);
@@ -151,7 +151,7 @@
         return $('#msg_table tr.selected').prevAll().length;
       }
       
-      var beforeBlur = function(){
+      var beforeBlur = function(catalogue_id){
         if ( !$('#msg_table tr.selected').length ) return;
         var $row = $('#msg_table tr:eq(' + getCurrentMessage() + ')');    
 
@@ -166,7 +166,7 @@
           msg.comments = $('#comments').val();
           $row.trigger('sync');
           $.messageService('updateMessage', 
-                          [msg.msgid, msg.comments, msg.msgstr, msg.fuzzy], 
+                          [catalogue_id, msg.msgid, msg.comments, msg.msgstr, msg.fuzzy], 
                           function() {} 
                           );
         }
@@ -353,7 +353,7 @@
   <div id="errors"><p>-Error-</p><input type="submit" name="hideBtn" id="hideBtn" value="Hide"></div>
   <div id="messages"><span></span></div>
   <div id="nav">
-    <a href="http://jenkins.devbk.net/job/trunk-i18n/build?token=ieb6uaQu&cause=SimplePO+manual+launch/">Deploy Langs</a> 
+    <a href="https://github.com/pacifists/simplepo/">SimplePO</a>
     <a href="index.html">Catalogue</a> 
     <div class="left">
       <span id="cat_name"></span>
@@ -423,7 +423,7 @@
   <div id="com_data"></div>
 </div>
 <div id="foot">
-  <a href="http://code.google.com/p/simplepo/">Simple Po</a> by the hackers at <a href="http://www.yabla.com/">Yabla</a>
+Gettext edition becomes easy with <a href="https://github.com/pacifists/simplepo/">SimplePO</a>!
 </div>
 
 </body>

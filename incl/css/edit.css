@@ -8,6 +8,9 @@ body,html {
 	/*background-color:#F4F4F8;*/
 	overflow-x:hidden;
 }
+label {
+    color: white;
+}
 #body_w {
 	margin:5px 5px 0 5px;
 }

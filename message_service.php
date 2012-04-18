@@ -63,10 +63,11 @@ class MessageService {
 											LEFT JOIN {messages} m ON m.catalogue_id=c.id
 											GROUP BY c.id")->fetchAll();
     }
-    function updateMessage($msgid, $comments, $msgstr, $fuzzy){
+    function updateMessage($catalogue_id, $msgid, $comments, $msgstr, $fuzzy){
       $q = new Query();
 			$flags = $fuzzy ? 'fuzzy' : '';
-      $q->sql("UPDATE {messages} SET comments=?, msgstr=?, flags=? WHERE msgid=?", $comments, $msgstr, $flags, $msgid)->execute();
+      $q->sql("UPDATE {messages} SET comments=?, msgstr=?, flags=? WHERE msgid=? AND catalogue_id=?", $comments, $msgstr, $flags, $msgid, $catalogue_id)->execute();
+      var_dump($catalogue_id);
       echo "true";
     }
 	function makeError() {
