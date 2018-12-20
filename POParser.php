@@ -150,7 +150,8 @@ class POParser{
   public $fileHandle;
   protected $context = array();
   public $entryStore;
-	
+  private $lineNumber;
+
 	protected $match_expressions = array(
 		array(
 			'type' => 'translator-comments',
@@ -274,7 +275,7 @@ class POParser{
   }
   
 	function parseLine( $line ){
-		$this->line_count++;
+		$this->lineNumber++;
     $line_object = array();
 		foreach($this->match_expressions as $m) {
 			if(preg_match($m['re_match'],$line) ) {
@@ -285,7 +286,7 @@ class POParser{
 		}
 		// didn't match anything 
 		if(!$line_object) {
-			throw new Exception( sprintf("unrecognized line fomat at line: %d",$this->line_count) );
+			throw new Exception( sprintf("unrecognized line fomat at line: %d",$this->lineNumber) );
 		}
     
     return $line_object;
