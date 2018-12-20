@@ -1,0 +1,26 @@
+{
+	"name": "tacoberu/simplepo",
+	"description": "A Web Based PO File Editor. Simple gettext (po) translation tool in php.",
+	"type": "project",
+	"require": {
+		"php" : ">=5.3.2"
+	},
+	"authors": [
+		{
+			"name": "JCampbell1"
+		},
+		{
+			"name": "narmak101"
+		},
+		{
+			"name": "Christian Grobmeier",
+			"email": "grobmeier@gmail.com"
+		},
+		{
+			"name": "Martin Takac",
+			"email": "martin@takac.name"
+		}
+	],
+	"minimum-stability": "dev",
+	"license": "MIT"
+}
