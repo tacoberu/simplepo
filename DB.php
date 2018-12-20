@@ -1,66 +1,93 @@
 <?php
 
-class SQLException extends Exception {}
+class SQLException extends Exception
+{}
 
-class DBConnection {
-	
+
+class DBConnection
+{
+
 	private static $link;
-	
-	private function __construct() { }
-	
-	public static function getInstance() {
+
+
+	private function __construct()
+	{}
+
+
+	static function getInstance()
+	{
 		global $simplepo_config;
-		if(!self::$link)
+		if (!self::$link) {
 			self::$link = mysql_connect( $simplepo_config['db_host'], $simplepo_config['db_user'], $simplepo_config['db_pass'] );
 			mysql_select_db( $simplepo_config['db_name'] );
 			mysql_set_charset('utf8');
+		}
 		return self::$link;
 	}
+
 }
 
-class Query {
+
+class Query
+{
 
 	private $sql;
 	private $cursor;
 	private $link;
 	private $table_prefix;
 
-	function __construct($link = null) {
+
+	function __construct($link = null)
+	{
 		global $simplepo_config;
 		$this->sql = "";
 		$this->table_prefix = $simplepo_config['table_prefix'];
-		if(!$link) {
-			$this->link = DBConnection::getInstance(); 
+		if (!$link) {
+			$this->link = DBConnection::getInstance();
 		}
 	}
-	function reset() {
-		if($this->cursor) {
-				@mysql_free_result($this->cursor);
-				$this->cursor = null; 
+
+
+
+	function reset()
+	{
+		if ($this->cursor) {
+			@mysql_free_result($this->cursor);
+			$this->cursor = null;
 		}
 		$this->sql = "";
 		return $this;
 	}
-	function sql() {
-		if($this->cursor) {
-				@mysql_free_result($this->cursor);
-				$this->cursor = null;
+
+
+
+	function sql()
+	{
+		if ($this->cursor) {
+			@mysql_free_result($this->cursor);
+			$this->cursor = null;
 		}
 		$args = func_get_args();
 		$sql = array_shift($args);
+
 		// replace {} with table prefix
 		$sql = preg_replace('/{([^}]*)}/',$this->table_prefix . '${1}',$sql);
-		// escape arguments 
+
+		// escape arguments
 		$sql = str_replace('%','%%',$sql);
 		$sql = str_replace('?','%s',$sql);
 		$args = array_map(array('Query','escape'),$args);
-		array_unshift($args,$sql);			
+		array_unshift($args,$sql);
 		$this->sql = call_user_func_array("sprintf",$args);
-				
+
 		return $this;
 	}
-	function appendSql() {
-		if($this->cursor) {
+
+
+
+	function appendSql()
+	{
+		if ($this->cursor) {
 			mysql_free_result($this->cursor);
 			$this->cursor = null;
 		}
@@ -68,113 +95,194 @@ class Query {
 		$sql = array_shift($args);
 		$sql = str_replace('?','%s',$sql);
 		$args = array_map(array('Query','escape'),$args);
-		array_unshift($args,$sql);			
+		array_unshift($args,$sql);
 		$this->sql .= call_user_func_array("sprintf",$args);
-				
+
 		return $this;
-	
+
 	}
-	function fetchAll() {
-		if(!$this->cursor) {
+
+
+
+	function fetchAll()
+	{
+		if (!$this->cursor) {
 			$this->makeCursor();
 		}
 		$res = array();
-		while($row = mysql_fetch_assoc($this->cursor)) $res[] = $row;
+		while ($row = mysql_fetch_assoc($this->cursor)) {
+			$res[] = $row;
+		}
 		return $res;
 	}
-	function fetch() {
-		if(!$this->cursor) {
+
+
+
+	function fetch()
+	{
+		if (!$this->cursor) {
 			$this->makeCursor();
 		}
 		return mysql_fetch_assoc($this->cursor);
 	}
-	function fetchOne() {
-		if(!$this->cursor) {
+
+
+
+	function fetchOne()
+	{
+		if (!$this->cursor) {
 			$this->makeCursor();
 		}
 		$r = mysql_fetch_row($this->cursor);
 		return $r[0];
 	}
-	function count() {
-		if(!$this->cursor) {
-				$this->makeCursor();
+
+
+
+	function count()
+	{
+		if (!$this->cursor) {
+			$this->makeCursor();
 		}
 		return mysql_num_rows($this->cursor);
 	}
-	function affectedRows() {
-		if(!$this->cursor) {
-				$this->makeCursor();
+
+
+
+	function affectedRows()
+	{
+		if (!$this->cursor) {
+			$this->makeCursor();
 		}
 		return mysql_affected_rows($this->link);
 	}
-	function insertId() {
-		if(!$this->cursor) {
+
+
+
+	function insertId()
+	{
+		if (!$this->cursor) {
 			$this->makeCursor();
 		}
 		return mysql_insert_id($this->link);
 	}
-	function execute() {
+
+
+
+	function execute()
+	{
 		$this->makeCursor();
 	}
-	function fetchRow() {
-		if(!$this->cursor) {
+
+
+
+	function fetchRow()
+	{
+		if (!$this->cursor) {
 			$this->makeCursor();
 		}
 		return mysql_fetch_row($this->cursor);
 	}
-	function fetchCol($index = 0) {
-		if(!$this->cursor) {
+
+
+
+	function fetchCol($index = 0)
+	{
+		if (!$this->cursor) {
 			$this->makeCursor();
 		}
 		$result = array();
-		if(is_int($index)) {
-			while($a = mysql_fetch_row($this->cursor)) $result[] = $a[$index];
-		} else {
-			while($a = mysql_fetch_assoc($this->cursor)) $result[] = $a[$index];
+		if (is_int($index)) {
+			while ($a = mysql_fetch_row($this->cursor)) {
+				$result[] = $a[$index];
+			}
+		}
+		else {
+			while ($a = mysql_fetch_assoc($this->cursor)) {
+				$result[] = $a[$index];
+			}
 		}
 		return $result;
 	}
-	function fetchAllKV() {
-		if(!$this->cursor) {
+
+
+
+	function fetchAllKV()
+	{
+		if (!$this->cursor) {
 			$this->makeCursor();
 		}
 		$res = array();
-		while(list($a,$b) = mysql_fetch_row($this->cursor)) $r[$a] = $b;
+		while (list($a,$b) = mysql_fetch_row($this->cursor)) {
+			$r[$a] = $b;
+		}
 		return $r;
 	}
-	protected function makeCursor() {
+
+
+
+	private function makeCursor()
+	{
 		$this->cursor = mysql_query($this->sql,$this->link);
-		if($this->cursor === false) {
+		if ($this->cursor === false) {
 			$err = $this->getError();
 			throw new SQLException("\n" . $err ."\n");
 		}
 	}
-	function getError() {
+
+
+
+	function getError()
+	{
 		$err = "<pre>" . mysql_error() . "\n" . $this->sql . "</pre>";
 		return $err;
 	}
-	function getSQL() {
+
+
+
+	function getSQL()
+	{
 		return $this->sql;
 	}
-	function getCursor() {
+
+
+
+	function getCursor()
+	{
 		return $this->cursor;
 	}
-	public function __toString() {
+
+
+
+	function __toString()
+	{
 		return $this->sql;
 	}
-	public static function escape($value) {
-		if (is_int($value) || is_float($value) ) {
+
+
+
+	/**
+	 * @internal
+	 */
+	static function escape($value)
+	{
+		if (is_int($value) || is_float($value)) {
 			return "$value";
-		} elseif(is_array($value)) {
-			if(!empty($value)) {
+		}
+		elseif (is_array($value)) {
+			if (!empty($value)) {
 				return implode(',',array_map(array('Query','escape'),$value));
-			} else {
+			}
+			else {
 				return "NULL";
 			}
-		} elseif (is_null($value)) {
+		}
+		elseif (is_null($value)) {
 			return "''";
-		} else {
+		}
+		else {
 			return "'" . mysql_real_escape_string($value) . "'";
 		}
 	}
+
 }

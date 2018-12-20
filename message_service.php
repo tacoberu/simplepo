@@ -7,28 +7,36 @@ require_once 'DB.php';
 $rpc = new JSON_RPC(new MessageService());
 echo $rpc->getResponse($_POST["request"]);
 
-class JSON_RPC {
-	
+class JSON_RPC
+{
 	protected $service;
-	
-	function __construct($obj) {
+
+	function __construct($obj)
+	{
 		$this->service = $obj;
 	}
-	function getResponse($request_string) {
+
+
+
+	function getResponse($request_string)
+	{
 		$request = json_decode($request_string,true);
 		$response = array('error'=>null);
 
-		if($request['id'])
+		if ($request['id']) {
 			$response['id'] = $request['id'];
+		}
 
-		if(method_exists($this->service,$request['method'])) {
+		if (method_exists($this->service,$request['method'])) {
 			try {
                 $r = call_user_func_array(array($this->service, $request['method']), $request['params']);
 				$response['result'] = $r;
-			} catch (Exception $e) {
+			}
+			catch (Exception $e) {
 				$response['error'] = array('code' => -31000,'message' => $e->getMessage());
 			}
-		} else {
+		}
+		else {
 			$response['error'] = array('code' => -32601,'message' => 'Procedure not found.');
 		}
 
@@ -36,42 +44,62 @@ class JSON_RPC {
 	}
 }
 
-class MessageService {
-	function __construct() {
+
+
+class MessageService
+{
+	function __construct()
+	{}
+
+
+
+	function getMessages($id)
+	{
+		$q = new Query();
+		$messages = $q->sql("SELECT *
+			FROM {messages}
+			WHERE catalogue_id=? AND is_header <> 1
+			ORDER BY msgstr != '', flags != 'fuzzy' ", $id)
+			->fetchAll();
+
+		foreach($messages as &$m) {
+			$m['fuzzy'] = strpos($m['flags'],'fuzzy') !== FALSE;
+			$m['is_obsolete'] = !!$m['is_obsolete'];
+		}
+		return $messages;
 	}
-	function getMessages($id) {
-      $q = new Query();
-      $messages = $q->sql("SELECT * 
-        FROM {messages} 
-        WHERE catalogue_id=? AND is_header <> 1 
-        ORDER BY msgstr != '', flags != 'fuzzy' ", $id)
-        ->fetchAll();
-			
-			foreach($messages as &$m) {
-				$m['fuzzy'] = strpos($m['flags'],'fuzzy') !== FALSE;
-				$m['is_obsolete'] = !!$m['is_obsolete'];
-			}
-			return $messages;
-	}
-    function getCatalogues(){
-      $q = new Query();
-      return $q->sql("SELECT c.name,c.id,COUNT(*) as message_count, 
-	      SUM(LENGTH(m.msgstr) >0 and m.flags != 'fuzzy') as translated_count,
-	      SUM(LENGTH(m.msgstr) >0 and m.flags = 'fuzzy') as fuzzy_count
-														 
-											FROM {catalogues} c
-											LEFT JOIN {messages} m ON m.catalogue_id=c.id
-											GROUP BY c.id")->fetchAll();
+
+
+
+    function getCatalogues()
+    {
+		$q = new Query();
+		return $q->sql("SELECT c.name,c.id,COUNT(*) as message_count,
+			SUM(LENGTH(m.msgstr) >0 and m.flags != 'fuzzy') as translated_count,
+			SUM(LENGTH(m.msgstr) >0 and m.flags = 'fuzzy') as fuzzy_count
+			FROM {catalogues} c
+			LEFT JOIN {messages} m ON m.catalogue_id=c.id
+			GROUP BY c.id")
+			->fetchAll();
     }
-    function updateMessage($catalogue_id, $msgid, $comments, $msgstr, $fuzzy){
-      $q = new Query();
-			$flags = $fuzzy ? 'fuzzy' : '';
-      $q->sql("UPDATE {messages} SET comments=?, msgstr=?, flags=? WHERE msgid=? AND catalogue_id=?", $comments, $msgstr, $flags, $msgid, $catalogue_id)->execute();
-      var_dump($catalogue_id);
-      echo "true";
+
+
+
+    function updateMessage($catalogue_id, $msgid, $comments, $msgstr, $fuzzy)
+    {
+		$q = new Query();
+		$flags = $fuzzy ? 'fuzzy' : '';
+		$q->sql("UPDATE {messages} SET comments=?, msgstr=?, flags=? WHERE msgid=? AND catalogue_id=?", $comments, $msgstr, $flags, $msgid, $catalogue_id)->execute();
+		var_dump($catalogue_id);
+		echo "true";
     }
-	function makeError() {
+
+
+
+	function makeError()
+	{
 		throw new Exception("This is an error");
 	}
+
 }
 
